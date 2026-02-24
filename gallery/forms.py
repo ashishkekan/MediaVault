@@ -7,20 +7,18 @@ from .models import MediaFile, Album
 class UploadForm(forms.ModelForm):
     class Meta:
         model = MediaFile
-        fields = ["file", "category"]  # Only file field
+        fields = ['file']  # sirf file field
 
     def clean_file(self):
-        file = self.cleaned_data.get("file")
+        file = self.cleaned_data.get('file')
         if file:
-            ext = file.name.split(".")[-1].lower()
-            if ext in ["jpg", "jpeg", "png", "gif", "bmp"]:
-                self.instance.media_type = "photo"
-            elif ext in ["mp4", "avi", "mov", "mkv"]:
-                self.instance.media_type = "video"
-            elif ext in ["pdf", "doc", "docx", "txt"]:
-                self.instance.media_type = "document"
+            ext = file.name.split('.')[-1].lower()
+            if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+                self.instance.media_type = 'photo'
+            elif ext in ['mp4', 'mov', 'avi', 'mkv', 'webm']:
+                self.instance.media_type = 'video'
             else:
-                self.instance.media_type = "document"  # Default
+                self.instance.media_type = 'document'  # pdf, doc, txt, sab document
         return file
 
 

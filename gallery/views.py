@@ -43,26 +43,21 @@ def home(request):
 
 @login_required
 def upload(request):
-    if request.method == "POST":
-        files = request.FILES.getlist("file")
-        uploaded = []
+    if request.method == 'POST':
+        form = UploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            media = form.save(commit=False)
+            media.user = request.user           # current user se link
+            media.save()                        # database mein save
+            return redirect('home')             # home page pe le jao
+        else:
+            # agar form invalid ho to error dikhao
+            print(form.errors)  # terminal mein check karne ke liye
 
-        for f in files:
-            form = UploadForm({"file": f})  # dummy
-            if form.is_valid():
-                instance = form.save(commit=False)
-                instance.user = request.user
-                instance.file = f
-                instance.save()
-                uploaded.append(instance)
+    else:
+        form = UploadForm()
 
-        if request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return JsonResponse({"success": True, "count": len(uploaded)})
-
-        return redirect("home")
-
-    form = UploadForm()
-    return render(request, "gallery/upload.html", {"form": form})
+    return render(request, 'gallery/upload.html', {'form': form})
 
 
 @login_required
