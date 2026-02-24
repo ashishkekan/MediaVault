@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - MediaVault{% endblock %}
+
+{% block content %}
+<section class="text-center mb-12">
+    <h1 class="font-display text-4xl md:text-5xl font-bold mb-4">Welcome, {{ request.user.username }}</h1>
+    <p class="text-lg text-muted">Your personal media vault</p>
+</section>
+
+<!-- Stats Section -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
+    <div class="glass-card rounded-xl p-6">
+        <h3 class="font-display text-xl font-semibold mb-2">Photos</h3>
+        <p class="text-3xl font-bold">{{ photos_count }}</p>
+    </div>
+    <div class="glass-card rounded-xl p-6">
+        <h3 class="font-display text-xl font-semibold mb-2">Videos</h3>
+        <p class="text-3xl font-bold">{{ videos_count }}</p>
+    </div>
+    <div class="glass-card rounded-xl p-6">
+        <h3 class="font-display text-xl font-semibold mb-2">Documents</h3>
+        <p class="text-3xl font-bold">{{ docs_count }}</p>
+    </div>
+    <div class="glass-card rounded-xl p-6">
+        <h3 class="font-display text-xl font-semibold mb-2">Storage Used</h3>
+        <p class="text-3xl font-bold">{{ total_size_gb }} GB</p>
+    </div>
+</section>
+
+<!-- Recent Uploads Grid -->
+<section>
+    <h2 class="font-display text-3xl font-bold mb-6">Recent Uploads</h2>
+    {% if recent_uploads %}
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {% for media in recent_uploads %}
+                <div class="gallery-item rounded-xl overflow-hidden aspect-square relative">
+                    {% if media.media_type == 'photo' %}
+                        <img src="{{ media.file.url }}" alt="Photo" class="w-full h-full object-cover">
+                    {% elif media.media_type == 'video' %}
+                        <video src="{{ media.file.url }}" class="w-full h-full object-cover" muted loop></video>
+                    {% else %}
+                        <div class="w-full h-full bg-muted flex items-center justify-center text-xl">Doc</div>
+                    {% endif %}
+                    <div class="gallery-overlay absolute bottom-0 left-0 right-0 p-4 bg-black/50 text-white">
+                        <p class="font-semibold">{{ media.file.name }}</p>
+                        <p class="text-sm">{{ media.uploaded_at|date:"d M Y" }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-center text-muted text-xl">No uploads yet. Start by uploading files!</p>
+    {% endif %}
+</section>
+{% endblock %}
