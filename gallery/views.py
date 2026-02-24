@@ -1,9 +1,11 @@
 # gallery/views.py (update home view)
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from .models import MediaFile
+from django.http import JsonResponse
+from .forms import UploadForm
 
 @login_required
 def home(request):
@@ -27,3 +29,23 @@ def home(request):
         'recent_uploads': recent_uploads,
     }
     return render(request, 'gallery/home.html', context)
+
+
+@login_required
+def upload(request):
+    if request.method == 'POST':
+        form = UploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            instance = form.save(commit=False)
+            instance.user = request.user  # Save to current user
+            instance.save()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':  # AJAX response
+                return JsonResponse({'success': True, 'file_url': instance.file.url})
+            return redirect('home')  # Normal redirect to dashboard
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+    else:
+        form = UploadForm()
+    
+    return render(request, 'gallery/upload.html', {'form': form})

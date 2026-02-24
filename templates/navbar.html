@@ -11,12 +11,14 @@
         
         <div class="flex items-center gap-4">
             {% if user.is_authenticated %}
+                <a href="{% url 'upload' %}" class="px-4 py-2 btn-accent rounded-lg">Upload</a>
                 <div class="relative">
                     <button id="profileBtn" class="flex items-center gap-2">
                         <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=00d4aa&color=fff" 
                              alt="{{ user.username }}" class="w-8 h-8 rounded-full">
                         <span class="hidden md:inline">{{ user.username }}</span>
                     </button>
+                    
                     <div id="profileDropdown" class="dropdown-menu absolute right-0 mt-2 w-48 glass-card rounded-lg p-2 hidden">
                         <a href="#" class="block px-4 py-2 hover:bg-white/5">Profile</a>
                         <a href="{% url 'logout' %}" class="block px-4 py-2 hover:bg-white/5 text-red-400">Logout</a>
