@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Albums - MediaVault{% endblock %}
+
+{% block content %}
+<h1 class="font-display text-4xl font-bold mb-8">My Albums</h1>
+
+<a href="{% url 'album_create' %}" class="btn-accent px-6 py-3 rounded-xl inline-flex items-center gap-2 mb-8">
+    <span>+</span> Create New Album
+</a>
+
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    {% for album in albums %}
+        <a href="{% url 'album_detail' album.pk %}" class="glass-card rounded-2xl overflow-hidden group">
+            {% if album.cover %}
+                <img src="{{ album.cover.file.url }}" class="w-full h-48 object-cover">
+            {% else %}
+                <div class="h-48 bg-muted flex-center text-6xl">📁</div>
+            {% endif %}
+            <div class="p-4">
+                <h3 class="font-display font-semibold">{{ album.name }}</h3>
+                <p class="text-sm text-muted">{{ album.media_count }} items</p>
+            </div>
+        </a>
+    {% empty %}
+        <p class="col-span-full text-center text-muted py-20">No albums yet. Create one!</p>
+    {% endfor %}
+</div>
+{% endblock %}

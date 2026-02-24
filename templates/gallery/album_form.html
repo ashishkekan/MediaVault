@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - MediaVault{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-16">
+    <h1 class="font-display text-3xl font-bold mb-8 text-center">{{ title }}</h1>
+    <form method="post" class="glass-card rounded-2xl p-8">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn-accent w-full py-3 mt-4 rounded-xl">Save Album</button>
+    </form>
+</div>
+{% endblock %}
