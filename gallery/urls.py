@@ -26,4 +26,11 @@ urlpatterns = [
         views.remove_from_album,
         name="remove_from_album",
     ),
+    path("search/", views.global_search, name="global_search"),
+    path("toggle-favorite/<int:pk>/", views.toggle_favorite, name="toggle_favorite"),
+    path("trash/", views.trash_bin, name="trash_bin"),
+    path("restore/<int:pk>/", views.restore_file, name="restore_file"),
+    path("toggle-theme/", views.toggle_dark_mode, name="toggle_theme"),
+    path("share/<uuid:token>/", views.public_share, name="public_share"),
+    path("api/share/<int:pk>/", views.share_link, name="share_link"),
 ]

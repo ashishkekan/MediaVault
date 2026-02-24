@@ -63,6 +63,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "gallery.context_processors.theme",
             ],
         },
     },
@@ -70,6 +71,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "media_vault.wsgi.application"
 
+handler404 = "django.views.defaults.page_not_found"
+handler500 = "django.views.defaults.server_error"
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-3xl mx-auto text-center py-20">
+    <h1 class="font-display text-3xl">{{ file.file.name }}</h1>
+    {% if file.media_type == 'photo' %}
+        <img src="{{ file.file.url }}" class="mx-auto mt-10 max-h-[70vh]">
+    {% elif file.media_type == 'video' %}
+        <video controls src="{{ file.file.url }}" class="mx-auto mt-10"></video>
+    {% endif %}
+</div>
+{% endblock %}

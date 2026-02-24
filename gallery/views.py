@@ -2,12 +2,13 @@
 
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from datetime import datetime
 from .forms import UploadForm, AlbumForm
 from .models import MediaFile, Album
+from django.db.models import Q, Count, Sum
+from django.core.paginator import Paginator
 
 
 @login_required
@@ -23,6 +24,11 @@ def home(request):
 
     # Recent uploads (last 12)
     recent_uploads = user_files.order_by("-uploaded_at")[:12]
+    type_counts = (
+        MediaFile.objects.filter(user=request.user, is_deleted=False)
+        .values("media_type")
+        .annotate(count=Count("id"))
+    )
 
     context = {
         "photos_count": photos_count,
@@ -30,6 +36,7 @@ def home(request):
         "docs_count": docs_count,
         "total_size_gb": total_size_gb,
         "recent_uploads": recent_uploads,
+        "type_counts": {item["media_type"]: item["count"] for item in type_counts},
     }
     return render(request, "gallery/home.html", context)
 
@@ -37,24 +44,24 @@ def home(request):
 @login_required
 def upload(request):
     if request.method == "POST":
-        form = UploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            instance = form.save(commit=False)
-            instance.user = request.user  # Save to current user
-            instance.save()
-            if (
-                request.headers.get("x-requested-with") == "XMLHttpRequest"
-            ):  # AJAX response
-                return JsonResponse({"success": True, "file_url": instance.file.url})
-            return redirect("home")  # Normal redirect to dashboard
-        else:
-            if request.headers.get("x-requested-with") == "XMLHttpRequest":
-                return JsonResponse(
-                    {"success": False, "errors": form.errors}, status=400
-                )
-    else:
-        form = UploadForm()
+        files = request.FILES.getlist("file")
+        uploaded = []
 
+        for f in files:
+            form = UploadForm({"file": f})  # dummy
+            if form.is_valid():
+                instance = form.save(commit=False)
+                instance.user = request.user
+                instance.file = f
+                instance.save()
+                uploaded.append(instance)
+
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": True, "count": len(uploaded)})
+
+        return redirect("home")
+
+    form = UploadForm()
     return render(request, "gallery/upload.html", {"form": form})
 
 
@@ -213,3 +220,97 @@ def remove_from_album(request, album_pk, media_pk):
     media = get_object_or_404(MediaFile, pk=media_pk)
     album.media_files.remove(media)
     return redirect("album_detail", pk=album_pk)
+
+
+# ====================== GLOBAL SEARCH (Phase 8) ======================
+
+
+@login_required
+def global_search(request):
+    query = request.GET.get("q", "").strip()
+    media_type = request.GET.get("type")
+    category = request.GET.get("category")
+    favorite_only = request.GET.get("favorite") == "1"
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
+    results = MediaFile.objects.filter(user=request.user, is_deleted=False)
+
+    if query:
+        results = results.filter(
+            Q(file__icontains=query)
+            | Q(tags__icontains=query)
+            | Q(category__icontains=query)
+        )
+    if media_type:
+        results = results.filter(media_type=media_type)
+    if category:
+        results = results.filter(category=category)
+    if favorite_only:
+        results = results.filter(is_favorite=True)
+    if start_date:
+        results = results.filter(uploaded_at__gte=start_date)
+    if end_date:
+        results = results.filter(uploaded_at__lte=end_date)
+
+    # Pagination for Load More
+    paginator = Paginator(results, 12)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "results": page_obj,
+        "query": query,
+        "media_type": media_type,
+        "category": category,
+        "favorite_only": favorite_only,
+        "start_date": start_date,
+        "end_date": end_date,
+        "has_next": page_obj.has_next(),
+    }
+    return render(request, "gallery/search.html", context)
+
+
+# ====================== FAVORITE TOGGLE ======================
+@login_required
+def toggle_favorite(request, pk):
+    file = get_object_or_404(MediaFile, pk=pk, user=request.user)
+    file.is_favorite = not file.is_favorite
+    file.save()
+    return JsonResponse({"is_favorite": file.is_favorite})
+
+
+# ====================== TRASH BIN ======================
+@login_required
+def trash_bin(request):
+    trash_files = MediaFile.objects.filter(user=request.user, is_deleted=True)
+    return render(request, "gallery/trash.html", {"files": trash_files})
+
+
+@login_required
+def restore_file(request, pk):
+    file = get_object_or_404(MediaFile, pk=pk, user=request.user)
+    file.is_deleted = False
+    file.save()
+    return redirect("trash_bin")
+
+
+# ====================== DARK MODE TOGGLE ======================
+@login_required
+def toggle_dark_mode(request):
+    current = request.session.get("theme", "dark")
+    new_theme = "light" if current == "dark" else "dark"
+    request.session["theme"] = new_theme
+    return JsonResponse({"theme": new_theme})
+
+
+@login_required
+def share_link(request, pk):
+    file = get_object_or_404(MediaFile, pk=pk, user=request.user)
+    share_url = request.build_absolute_uri(f"/share/{file.share_token}/")
+    return JsonResponse({"share_url": share_url})
+
+
+def public_share(request, token):
+    file = get_object_or_404(MediaFile, share_token=token)
+    return render(request, "gallery/public_share.html", {"file": file})

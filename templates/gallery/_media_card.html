@@ -1,0 +1,17 @@
+<div class="gallery-item rounded-2xl overflow-hidden">
+    <a href="{% url 'media_detail' file.pk %}">
+        {% if file.media_type == 'photo' %}
+            <img src="{{ file.file.url }}" class="w-full aspect-square object-cover">
+        {% elif file.media_type == 'video' %}
+            <video src="{{ file.file.url }}" class="w-full aspect-square object-cover" muted></video>
+        {% else %}
+            <div class="aspect-square bg-muted flex-center text-6xl">📄</div>
+        {% endif %}
+    </a>
+    <div class="p-3 flex justify-between">
+        <p class="text-sm truncate">{{ file.file.name }}</p>
+        {% if file.is_favorite %}
+            <span class="text-red-400">❤️</span>
+        {% endif %}
+    </div>
+</div>
