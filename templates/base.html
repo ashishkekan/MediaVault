@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MediaVault{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Yeh tumhare original styles daal de (bg-atmosphere, orb, glass-card, etc.) */
+        :root {
+            --bg: #0a0a0f;
+            --fg: #f0f0f5;
+            --muted: #6b6b80;
+            --accent: #00d4aa;
+            --card: rgba(20, 20, 30, 0.7);
+            --border: rgba(255, 255, 255, 0.08);
+        }
+        /* ... pura style block copy from your original HTML ... */
+    </style>
+</head>
+<body class="bg-[var(--bg)] text-[var(--fg)] font-body">
+    <div class="bg-atmosphere">
+        <!-- Orbs -->
+        <div class="orb" style="..."></div>  <!-- Copy your orbs -->
+    </div>
+    
+    {% include 'navbar.html' %}
+    
+    <main class="pt-20 max-w-7xl mx-auto px-4">
+        {% block content %}{% endblock %}
+    </main>
+    
+    {% include 'footer.html' %}
+    
+    <script>
+        // base.html ke <script> mein add kar
+        const profileBtn = document.getElementById('profileBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('hidden');
+            });
+            document.addEventListener('click', () => profileDropdown.classList.add('hidden'));
+        }
+    </script>
+</body>
+</html>
