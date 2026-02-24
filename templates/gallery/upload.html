@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Upload Files - MediaVault{% endblock %}
+
+{% block content %}
+<section class="max-w-4xl mx-auto mt-12">
+    <h1 class="font-display text-4xl font-bold mb-8 text-center">Upload Your Media</h1>
+    
+    <div id="dropzone" class="glass-card rounded-2xl p-12 text-center cursor-pointer border-2 border-dashed border-muted hover:border-accent transition-all">
+        <svg class="w-16 h-16 mx-auto mb-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <p class="text-xl mb-4">Drag & drop files here or click to browse</p>
+        <form method="post" enctype="multipart/form-data" id="uploadForm">
+            {% csrf_token %}
+            {{ form.file }}  <!-- Hidden input -->
+            <button type="submit" class="btn-accent px-8 py-3 rounded-xl hidden">Upload</button>  <!-- JS se handle -->
+        </form>
+    </div>
+    
+    <div id="previewContainer" class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+    <div id="statusMessages" class="mt-4"></div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/upload.js' %}"></script>
+{% endblock %}
