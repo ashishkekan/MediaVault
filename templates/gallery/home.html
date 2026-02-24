@@ -53,4 +53,20 @@
         <p class="text-center text-muted text-xl">No uploads yet. Start by uploading files!</p>
     {% endif %}
 </section>
+<canvas id="storageChart" class="w-full h-64"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('storageChart');
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Photos', 'Videos', 'Documents'],
+        datasets: [{
+            data: [{{ type_counts|json_script:"photo" }}, {{ type_counts|json_script:"video" }}, {{ type_counts|json_script:"document" }}],
+            backgroundColor: ['#00d4aa', '#a855f7', '#eab308']
+        }]
+    }
+});
+</script>
 {% endblock %}

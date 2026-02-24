@@ -3,6 +3,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+import uuid
 
 
 class MediaFile(models.Model):
@@ -17,10 +18,14 @@ class MediaFile(models.Model):
     media_type = models.CharField(max_length=10, choices=MEDIA_TYPES, default="photo")
     size = models.PositiveIntegerField(default=0)
     category = models.CharField(max_length=50, blank=True, null=True)
+    tags = models.CharField(
+        max_length=500, blank=True, help_text="Comma separated tags"
+    )
+    is_favorite = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
+    share_token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
-    # Many-to-Many with Album
     albums = models.ManyToManyField("Album", related_name="media_files", blank=True)
 
     def __str__(self):

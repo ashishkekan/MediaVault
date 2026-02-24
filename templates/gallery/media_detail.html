@@ -154,5 +154,9 @@
             }
         }).catch(error => console.error('PDF load error:', error));
     {% endif %}
+    async function toggleFav(pk) {
+        await fetch(`/toggle-favorite/${pk}/`, { method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token }}'} });
+        // UI update
+    }
 </script>
 {% endblock %}

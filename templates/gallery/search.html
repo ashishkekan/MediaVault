@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Search - MediaVault{% endblock %}
+
+{% block content %}
+<h1 class="font-display text-4xl font-bold mb-8">Search Results</h1>
+
+<!-- Filters -->
+<form method="get" class="glass-card rounded-2xl p-6 mb-10">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search by name or tag..." class="search-input w-full py-3 px-4 rounded-xl">
+        
+        <select name="type" class="search-input w-full py-3 px-4 rounded-xl">
+            <option value="">All Types</option>
+            <option value="photo" {% if media_type == 'photo' %}selected{% endif %}>Photos</option>
+            <option value="video" {% if media_type == 'video' %}selected{% endif %}>Videos</option>
+            <option value="document" {% if media_type == 'document' %}selected{% endif %}>Documents</option>
+        </select>
+        
+        <select name="category" class="search-input w-full py-3 px-4 rounded-xl">
+            <option value="">All Categories</option>
+            <option value="camera" {% if category == 'camera' %}selected{% endif %}>Camera</option>
+            <option value="whatsapp" {% if category == 'whatsapp' %}selected{% endif %}>WhatsApp</option>
+            <option value="screenshots" {% if category == 'screenshots' %}selected{% endif %}>Screenshots</option>
+            <option value="instagram" {% if category == 'instagram' %}selected{% endif %}>Instagram</option>
+        </select>
+        
+        <div class="flex items-center gap-4">
+            <label class="flex items-center gap-2">
+                <input type="checkbox" name="favorite" value="1" {% if favorite_only %}checked{% endif %}>
+                <span>Favorites only</span>
+            </label>
+        </div>
+    </div>
+    <button type="submit" class="mt-6 btn-accent px-8 py-3 rounded-xl">Search</button>
+</form>
+
+<!-- Results Grid -->
+<div id="resultsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    {% for file in results %}
+        {% include 'gallery/_media_card.html' with file=file %}
+    {% empty %}
+        <p class="col-span-full text-center text-muted py-20">No results found.</p>
+    {% endfor %}
+</div>
+
+<!-- Load More Button -->
+{% if has_next %}
+    <div class="text-center mt-12">
+        <button id="loadMoreBtn" class="btn-accent px-10 py-3 rounded-xl">Load More</button>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const loadMoreBtn = document.getElementById('loadMoreBtn');
+let currentPage = 1;
+
+if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', async () => {
+        currentPage++;
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', currentPage);
+        
+        const res = await fetch(url);
+        const html = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        const newItems = doc.querySelectorAll('#resultsGrid > *');
+        document.getElementById('resultsGrid').append(...newItems);
+        
+        if (!doc.querySelector('#loadMoreBtn')) {
+            loadMoreBtn.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}
