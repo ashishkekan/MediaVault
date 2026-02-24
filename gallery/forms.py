@@ -6,7 +6,7 @@ from .models import MediaFile
 class UploadForm(forms.ModelForm):
     class Meta:
         model = MediaFile
-        fields = ['file']  # Only file field
+        fields = ['file', 'category']  # Only file field
 
     def clean_file(self):
         file = self.cleaned_data.get('file')

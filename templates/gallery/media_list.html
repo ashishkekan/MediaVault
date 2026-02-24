@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - MediaVault{% endblock %}
+
+{% block content %}
+<section class="mb-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="font-display text-4xl font-bold">{{ title }}</h1>
+        <button id="toggleView" class="btn-accent px-4 py-2 rounded-xl">Switch to List</button>
+    </div>
+    
+    <!-- Filters Form -->
+    <form method="get" class="glass-card rounded-xl p-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm mb-2">Category</label>
+                <select name="category" class="search-input w-full py-2 px-4 rounded-lg">
+                    <option value="">All</option>
+                    <option value="camera" {% if request.GET.category == 'camera' %}selected{% endif %}>Camera</option>
+                    <option value="whatsapp" {% if request.GET.category == 'whatsapp' %}selected{% endif %}>WhatsApp</option>
+                    <option value="screenshots" {% if request.GET.category == 'screenshots' %}selected{% endif %}>Screenshots</option>
+                    <option value="instagram" {% if request.GET.category == 'instagram' %}selected{% endif %}>Instagram</option>
+                    <!-- Add more options -->
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm mb-2">Start Date</label>
+                <input type="date" name="start_date" value="{{ request.GET.start_date }}" class="search-input w-full py-2 px-4 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm mb-2">End Date</label>
+                <input type="date" name="end_date" value="{{ request.GET.end_date }}" class="search-input w-full py-2 px-4 rounded-lg">
+            </div>
+        </div>
+        <button type="submit" class="mt-4 btn-accent px-6 py-2 rounded-xl">Apply Filters</button>
+    </form>
+    
+    <!-- Media Grid/List -->
+    <div id="mediaView" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {% for file in files %}
+            <div class="gallery-item rounded-xl overflow-hidden relative {% if type == 'document' %}aspect-auto h-32{% else %}aspect-square{% endif %}">
+                {% if type == 'photo' %}
+                    <img src="{{ file.file.url }}" alt="{{ file.file.name }}" class="w-full h-full object-cover">
+                {% elif type == 'video' %}
+                    <video src="{{ file.file.url }}" class="w-full h-full object-cover" muted loop></video>
+                {% else %}
+                    <div class="w-full h-full bg-muted flex-center text-xl flex-col">
+                        <span>📄</span>
+                        <span class="text-sm truncate px-2">{{ file.file.name }}</span>
+                    </div>
+                {% endif %}
+                <a href="{% url 'media_detail' file.pk %}">
+                    <div class="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-sm">
+                        View Details
+                    </div>
+                </a>
+                <div class="absolute bottom-0 left-0 right-0 p-2 bg-black/50 text-white flex justify-between items-center">
+                    <span class="text-sm truncate">{{ file.file.name }}</span>
+                    <div class="flex gap-2">
+                        <a href="{{ file.file.url }}" download class="text-green-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                        </a>
+                        <a href="{% url 'delete_file' file.pk %}?next={{ request.path }}" class="text-red-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p class="col-span-full text-center text-muted text-xl">No {{ title|lower }} found.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const toggleBtn = document.getElementById('toggleView');
+    const mediaView = document.getElementById('mediaView');
+    
+    toggleBtn.addEventListener('click', () => {
+        if (mediaView.classList.contains('grid-cols-2')) {
+            // Switch to list
+            mediaView.classList.remove('grid', 'grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-4', 'gap-4');
+            mediaView.classList.add('flex', 'flex-col', 'space-y-4');
+            toggleBtn.textContent = 'Switch to Grid';
+        } else {
+            // Switch to grid
+            mediaView.classList.remove('flex', 'flex-col', 'space-y-4');
+            mediaView.classList.add('grid', 'grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-4', 'gap-4');
+            toggleBtn.textContent = 'Switch to List';
+        }
+    });
+</script>
+{% endblock %}
