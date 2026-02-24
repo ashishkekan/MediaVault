@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from .models import MediaFile
 from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404, redirect
+from datetime import datetime
 from .forms import UploadForm
 
 @login_required
@@ -49,3 +51,51 @@ def upload(request):
         form = UploadForm()
     
     return render(request, 'gallery/upload.html', {'form': form})
+
+
+@login_required
+def photos_list(request):
+    queryset = MediaFile.objects.filter(user=request.user, media_type='photo', is_deleted=False)
+    queryset = apply_filters(request, queryset)
+    context = {'files': queryset, 'title': 'Photos', 'type': 'photo'}
+    return render(request, 'gallery/media_list.html', context)
+
+@login_required
+def videos_list(request):
+    queryset = MediaFile.objects.filter(user=request.user, media_type='video', is_deleted=False)
+    queryset = apply_filters(request, queryset)
+    context = {'files': queryset, 'title': 'Videos', 'type': 'video'}
+    return render(request, 'gallery/media_list.html', context)
+
+@login_required
+def docs_list(request):
+    queryset = MediaFile.objects.filter(user=request.user, media_type='document', is_deleted=False)
+    queryset = apply_filters(request, queryset)
+    context = {'files': queryset, 'title': 'Documents', 'type': 'document'}
+    return render(request, 'gallery/media_list.html', context)
+
+def apply_filters(request, queryset):
+    category = request.GET.get('category')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    if category:
+        queryset = queryset.filter(category=category)
+    if start_date:
+        queryset = queryset.filter(uploaded_at__gte=datetime.strptime(start_date, '%Y-%m-%d'))
+    if end_date:
+        queryset = queryset.filter(uploaded_at__lte=datetime.strptime(end_date, '%Y-%m-%d'))
+    
+    return queryset
+
+@login_required
+def delete_file(request, pk):
+    file = get_object_or_404(MediaFile, pk=pk, user=request.user)
+    file.delete()  # Soft delete
+    return redirect(request.GET.get('next', 'home'))  # Redirect back to list or home
+
+@login_required
+def media_detail(request, pk):
+    file = get_object_or_404(MediaFile, pk=pk, user=request.user, is_deleted=False)
+    context = {'file': file}
+    return render(request, 'gallery/media_detail.html', context)

@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ file.file.name }} - MediaVault{% endblock %}
+
+{% block extra_head %}
+    <!-- Plyr for Video -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.338/pdf.min.js"></script>
+    
+    <style>
+        /* Zoom for photo */
+        .photo-viewer { transform-origin: center; transition: transform 0.3s; }
+        .photo-viewer.zoom { cursor: zoom-out; }
+        
+        /* Slideshow */
+        .slideshow-active { animation: slideshow 10s infinite; }
+        @keyframes slideshow { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        
+        /* PDF container */
+        #pdfViewer { height: 80vh; overflow: auto; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto mt-12">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="font-display text-4xl font-bold truncate">{{ file.file.name }}</h1>
+        <div class="flex gap-4">
+            <a href="{{ file.file.url }}" download class="btn-accent px-4 py-2 rounded-xl">Download</a>
+            <a href="{% url 'delete_file' file.pk %}?next={% url 'home' %}" class="bg-red-500/20 text-red-400 px-4 py-2 rounded-xl">Delete</a>
+        </div>
+    </div>
+    
+    <div class="glass-card rounded-2xl p-4 mb-8">
+        {% if file.media_type == 'photo' %}
+            <!-- Photo Viewer -->
+            <div id="photoViewer" class="photo-viewer mx-auto cursor-zoom-in" style="max-width: 100%; max-height: 70vh; overflow: hidden;">
+                <img src="{{ file.file.url }}" alt="{{ file.file.name }}" class="w-full h-auto">
+            </div>
+            <div class="flex justify-center gap-4 mt-4">
+                <button id="zoomIn" class="btn-accent px-4 py-2 rounded-xl">+</button>
+                <button id="zoomOut" class="btn-accent px-4 py-2 rounded-xl">-</button>
+                <button id="slideshowBtn" class="btn-accent px-4 py-2 rounded-xl">Start Slideshow</button>
+            </div>
+        
+        {% elif file.media_type == 'video' %}
+            <!-- Video Player with Plyr -->
+            <video id="videoPlayer" controls playsinline>
+                <source src="{{ file.file.url }}" type="video/mp4">
+            </video>
+            <div class="flex justify-center gap-4 mt-4">
+                <button id="speed05" class="btn-accent px-4 py-2 rounded-xl">0.5x</button>
+                <button id="speed1" class="btn-accent px-4 py-2 rounded-xl">1x</button>
+                <button id="speed15" class="btn-accent px-4 py-2 rounded-xl">1.5x</button>
+                <button id="speed2" class="btn-accent px-4 py-2 rounded-xl">2x</button>
+            </div>
+        
+        {% elif file.media_type == 'document' %}
+            <!-- PDF.js Viewer -->
+            <div id="pdfViewer" class="bg-white p-4 rounded-xl overflow-hidden"></div>
+        
+        {% else %}
+            <p class="text-center text-muted">Preview not available for this file type.</p>
+        {% endif %}
+    </div>
+    
+    <div class="glass-card rounded-2xl p-6">
+        <h2 class="font-display text-2xl font-semibold mb-4">Details</h2>
+        <dl class="grid grid-cols-2 gap-4 text-muted">
+            <dt>Uploaded:</dt> <dd>{{ file.uploaded_at|date:"d M Y H:i" }}</dd>
+            <dt>Size:</dt> <dd>{{ file.size|filesizeformat }}</dd>
+            <dt>Type:</dt> <dd>{{ file.get_media_type_display }}</dd>
+            <dt>Category:</dt> <dd>{{ file.category|default:"None" }}</dd>
+        </dl>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Common: Get CSRF token
+    function getCSRF() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+    
+    {% if file.media_type == 'photo' %}
+        // Photo Zoom & Slideshow
+        const photo = document.querySelector('#photoViewer img');
+        const viewer = document.getElementById('photoViewer');
+        let scale = 1;
+        
+        document.getElementById('zoomIn').addEventListener('click', () => {
+            scale += 0.5;
+            viewer.style.transform = `scale(${scale})`;
+            viewer.classList.add('zoom');
+        });
+        
+        document.getElementById('zoomOut').addEventListener('click', () => {
+            scale = Math.max(1, scale - 0.5);
+            viewer.style.transform = `scale(${scale})`;
+            if (scale === 1) viewer.classList.remove('zoom');
+        });
+        
+        viewer.addEventListener('click', () => {
+            if (scale > 1) {
+                scale = 1;
+                viewer.style.transform = 'scale(1)';
+                viewer.classList.remove('zoom');
+            }
+        });
+        
+        const slideshowBtn = document.getElementById('slideshowBtn');
+        slideshowBtn.addEventListener('click', () => {
+            viewer.classList.toggle('slideshow-active');
+            slideshowBtn.textContent = viewer.classList.contains('slideshow-active') ? 'Stop Slideshow' : 'Start Slideshow';
+        });
+    {% endif %}
+    
+    {% if file.media_type == 'video' %}
+        // Plyr Video Player
+        const player = new Plyr('#videoPlayer', {
+            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+            speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
+        });
+        
+        // Custom speed buttons
+        document.getElementById('speed05').addEventListener('click', () => player.speed = 0.5);
+        document.getElementById('speed1').addEventListener('click', () => player.speed = 1);
+        document.getElementById('speed15').addEventListener('click', () => player.speed = 1.5);
+        document.getElementById('speed2').addEventListener('click', () => player.speed = 2);
+    {% endif %}
+    
+    {% if file.media_type == 'document' %}
+        // PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.338/pdf.worker.min.js';
+        
+        const url = '{{ file.file.url }}';
+        const loadingTask = pdfjsLib.getDocument(url);
+        loadingTask.promise.then(pdf => {
+            const viewer = document.getElementById('pdfViewer');
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                pdf.getPage(pageNum).then(page => {
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    page.render({ canvasContext: context, viewport: viewport });
+                    viewer.appendChild(canvas);
+                });
+            }
+        }).catch(error => console.error('PDF load error:', error));
+    {% endif %}
+</script>
+{% endblock %}
