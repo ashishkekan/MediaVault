@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ album.name }} - MediaVault{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-8">
+    <h1 class="font-display text-4xl font-bold">{{ album.name }}</h1>
+    <div class="flex gap-3">
+        <a href="{% url 'album_edit' album.pk %}" class="glass-card px-5 py-2 rounded-xl">Rename</a>
+        <a href="{% url 'album_delete' album.pk %}" class="bg-red-500/20 text-red-400 px-5 py-2 rounded-xl">Delete Album</a>
+    </div>
+</div>
+
+<!-- Add Media Dropdown -->
+<div class="glass-card rounded-2xl p-6 mb-8">
+    <form method="get" action="{% url 'album_detail' album.pk %}">
+        <label class="block text-sm mb-2">Add media to this album</label>
+        <select name="media_id" class="search-input w-full py-3 px-4 rounded-xl">
+            <option value="">-- Select Media --</option>
+            {% for m in all_user_media %}
+                <option value="{{ m.pk }}">{{ m.file.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="mt-4 btn-accent px-6 py-2 rounded-xl">Add to Album</button>
+    </form>
+</div>
+
+<!-- Media Grid inside Album -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    {% for media in media_in_album %}
+        <div class="gallery-item relative">
+            {% if media.media_type == 'photo' %}
+                <img src="{{ media.file.url }}" class="w-full h-full object-cover">
+            {% elif media.media_type == 'video' %}
+                <video src="{{ media.file.url }}" class="w-full h-full object-cover" muted></video>
+            {% else %}
+                <div class="h-48 bg-muted flex-center text-4xl">📄</div>
+            {% endif %}
+            <a href="{% url 'remove_from_album' album.pk media.pk %}" 
+               class="absolute top-2 right-2 bg-red-500/80 text-white text-xs px-3 py-1 rounded-full">Remove</a>
+        </div>
+    {% empty %}
+        <p class="col-span-full text-center text-muted py-12">No media in this album yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}
