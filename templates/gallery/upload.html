@@ -3,41 +3,56 @@
 {% block title %}Upload File - MediaVault{% endblock %}
 
 {% block content %}
-<div class="max-w-lg mx-auto mt-16">
-    <h1 class="font-display text-4xl font-bold text-center mb-10">Upload File</h1>
+<div class="max-w-lg mx-auto mt-16 px-4">
+    <h1 class="font-display text-4xl font-bold text-center mb-10">Upload New File</h1>
 
-    <div class="glass-card rounded-2xl p-10">
-        <form method="post" enctype="multipart/form-data">
+    <div class="glass-card rounded-2xl p-8 shadow-2xl">
+        <form method="post" enctype="multipart/form-data" class="space-y-8">
             {% csrf_token %}
 
-            <!-- File Choose Field -->
-            <div class="mb-8">
-                <label class="block text-lg font-medium mb-3">Select File (Photo, Video, PDF, Doc etc.)</label>
+            <!-- File Input -->
+            <div>
+                <label class="block text-lg font-medium mb-3 text-white">
+                    Choose File (Photo, Video, PDF, Doc, etc.)
+                </label>
                 {{ form.file }}
-                <p class="text-sm text-muted mt-2">Max size: 100MB (server limit ke hisab se)</p>
+                <p class="text-sm text-muted mt-2">
+                    Supported: JPG, PNG, MP4, PDF, DOCX, TXT...
+                </p>
+                {% if form.file.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ form.file.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Category Dropdown -->
+            <div>
+                <label class="block text-lg font-medium mb-3 text-white">
+                    Select Category
+                </label>
+                {{ form.category }}
+                <p class="text-sm text-muted mt-2">
+                    Helps organize your files (you can change later too)
+                </p>
+                {% if form.category.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ form.category.errors|join:", " }}</p>
+                {% endif %}
             </div>
 
             <!-- Submit Button -->
-            <button type="submit" class="btn-accent w-full py-4 rounded-xl text-xl font-semibold">
-                Upload Now
+            <button type="submit" class="btn-accent w-full py-4 rounded-xl text-xl font-semibold mt-6">
+                Upload File
             </button>
         </form>
 
-        {% if form.errors %}
+        {% if form.non_field_errors %}
             <div class="mt-6 p-4 bg-red-500/20 text-red-300 rounded-xl">
-                <ul>
-                    {% for field, errors in form.errors.items %}
-                        {% for error in errors %}
-                            <li>{{ error }}</li>
-                        {% endfor %}
-                    {% endfor %}
-                </ul>
+                {{ form.non_field_errors }}
             </div>
         {% endif %}
     </div>
 
-    <p class="text-center text-muted mt-8">
-        Uploaded file aapke dashboard pe "Recent Uploads" mein dikhega.
+    <p class="text-center text-muted mt-8 text-sm">
+        File will be saved to your account and appear in Recent Uploads.
     </p>
 </div>
 {% endblock %}

@@ -47,13 +47,9 @@ def upload(request):
         form = UploadForm(request.POST, request.FILES)
         if form.is_valid():
             media = form.save(commit=False)
-            media.user = request.user           # current user se link
-            media.save()                        # database mein save
-            return redirect('home')             # home page pe le jao
-        else:
-            # agar form invalid ho to error dikhao
-            print(form.errors)  # terminal mein check karne ke liye
-
+            media.user = request.user
+            media.save()  # ← yaha category bhi save ho jayegi
+            return redirect('home')
     else:
         form = UploadForm()
 
